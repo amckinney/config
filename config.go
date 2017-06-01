@@ -21,11 +21,11 @@
 package config
 
 import (
+	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/ogier/pflag"
-	"io/ioutil"
-	"strings"
 )
 
 const (
