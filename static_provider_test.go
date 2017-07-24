@@ -23,7 +23,6 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
-	"sort"
 	"strings"
 	"testing"
 
@@ -266,30 +265,6 @@ func TestPopulateForMapsWithNotAssignableKeyTypes(t *testing.T) {
 	msg := err.Error()
 	assert.Contains(t, msg, `can't convert "1" to "config.secretType"`)
 	assert.Contains(t, msg, "key types conversion")
-}
-
-func TestValue_ChildKeys(t *testing.T) {
-	t.Parallel()
-
-	p := NewStaticProvider(map[string]interface{}{
-		"one":   1,
-		"two":   2,
-		"slice": []int{42, 13},
-	})
-
-	op := func(t *testing.T, key string, expected []string) {
-		keys := p.Get(key).ChildKeys()
-		sort.Strings(keys)
-		assert.Equal(t, expected, keys)
-	}
-
-	t.Run("Map", func(t *testing.T) { op(t, Root, []string{"one", "slice", "two"}) })
-	t.Run("Slice", func(t *testing.T) { op(t, "slice", []string{"0", "1"}) })
-	t.Run("SingleValue", func(t *testing.T) { op(t, "one", nil) })
-	t.Run("Empty", func(t *testing.T) { op(t, "nothing", nil) })
-
-	p = NewStaticProvider(map[int]string{3: "three", 5: "five"})
-	t.Run("MapOfInts", func(t *testing.T) { op(t, Root, []string{"3", "5"}) })
 }
 
 func TestInterpolatedBool(t *testing.T) {

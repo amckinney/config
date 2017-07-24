@@ -90,31 +90,6 @@ func (cv Value) WithDefault(value interface{}) Value {
 	return cv
 }
 
-// ChildKeys returns the child keys.
-func (cv Value) ChildKeys() []string {
-	var slice []interface{}
-	var res []string
-	if err := cv.Populate(&slice); err == nil {
-		for i := range slice {
-			res = append(res, fmt.Sprint(i))
-		}
-
-		return res
-	}
-
-	var m map[string]interface{}
-	if err := cv.Populate(&m); err != nil {
-		// got a scalar value => no child keys
-		return nil
-	}
-
-	for k := range m {
-		res = append(res, k)
-	}
-
-	return res
-}
-
 // String prints out underline value in Value with fmt.Sprint.
 func (cv Value) String() string {
 	return fmt.Sprint(cv.Value())
