@@ -73,7 +73,7 @@ func (cv Value) WithDefault(value interface{}) Value {
 	return cv
 }
 
-// String prints out underline value in Value with fmt.Sprint.
+// String prints out underlying value in Value with fmt.Sprint.
 func (cv Value) String() string {
 	return fmt.Sprint(cv.Value())
 }
@@ -171,9 +171,9 @@ func (cv Value) Get(key string) Value {
 	return NewScopedProvider(cv.key, cv.provider).Get(key)
 }
 
-// this is a quick-and-dirty conversion method that only handles
+// convertValue is a quick-and-dirty conversion method that only handles
 // a couple of cases and complains if it finds one it doesn't like.
-// needs a bunch more cases.
+// TODO: This needs a lot more cases.
 func convertValue(value interface{}, targetType reflect.Type) (interface{}, error) {
 	if value == nil {
 		return reflect.Zero(targetType).Interface(), nil

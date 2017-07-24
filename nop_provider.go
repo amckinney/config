@@ -25,7 +25,7 @@ type NopProvider struct{}
 
 var _ Provider = (*NopProvider)(nil)
 
-// Name is NopProvider
+// Name is NopProvider.
 func (p NopProvider) Name() string {
 	return "NopProvider"
 }

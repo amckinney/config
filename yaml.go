@@ -183,7 +183,7 @@ func (y yamlConfigProvider) getNode(key string) *yamlNode {
 	return y.root.Find(key)
 }
 
-// Name returns the config provider name
+// Name returns the config provider name.
 func (y yamlConfigProvider) Name() string {
 	return "yaml"
 }
@@ -198,7 +198,7 @@ func (y yamlConfigProvider) Get(key string) Value {
 	return NewValue(y, key, node.value, true)
 }
 
-// Simple YAML reader
+// nodeType is a simple YAML reader.
 type nodeType int
 
 const (
@@ -251,6 +251,7 @@ func (n *yamlNode) Find(dottedPath string) *yamlNode {
 	return nil
 }
 
+// Children returns a slice containing this node's child nodes.
 func (n *yamlNode) Children() []*yamlNode {
 	if n.children == nil {
 		n.children = []*yamlNode{}
@@ -321,7 +322,7 @@ func unmarshalYAMLValue(reader io.ReadCloser, value interface{}) error {
 //       port: ${HTTP_PORT:8080}
 //
 // In the case that HTTP_PORT is not provided, default value (in this case 8080)
-// will be used
+// will be used.
 //
 // TODO: what if someone wanted a literal ${FOO} in config? need a small escape hatch
 func replace(lookUp LookUpFunc) func(in string) string {

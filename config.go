@@ -27,7 +27,7 @@ import (
 	"path/filepath"
 )
 
-// LookUpFunc is a type alias for a function to look for environment variables,
+// LookUpFunc is a type alias for a function to look for environment variables.
 type LookUpFunc func(string) (string, bool)
 
 // FileInfo represents a file to load by LoadFromFiles function.
