@@ -25,8 +25,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	flag "github.com/spf13/pflag"
 )
 
 // LookUpFunc is a type alias for a function to look for environment variables,
@@ -42,15 +40,13 @@ type FileInfo struct {
 //  ./config/base.yaml
 //  ./config/${ENVIRONMENT}.yaml
 //  ./config/secrets.yaml
-// The provider is also amended with a command line provider that reads
-// a roles flag.
 func LoadDefaults() (Provider, error) {
 	env := "development"
 	if val, ok := os.LookupEnv("ENVIRONMENT"); ok {
 		env = val
 	}
 
-	p, err := LoadFromFiles(
+	return LoadFromFiles(
 		[]string{"config"},
 		[]FileInfo{
 			{Name: "base.yaml", Interpolate: true},
@@ -58,19 +54,6 @@ func LoadDefaults() (Provider, error) {
 			{Name: "secrets.yaml"},
 		},
 		os.LookupEnv)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Load commandLineProvider
-	var s StringSlice
-	f := flag.CommandLine
-	if f.Lookup("roles") == nil {
-		f.Var(&s, "roles", "")
-	}
-
-	return NewProviderGroup("global", p, NewCommandLineProvider(f, os.Args[1:])), nil
 }
 
 // LoadTestProvider will read configuration base.yaml and test.yaml from a
