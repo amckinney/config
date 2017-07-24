@@ -126,7 +126,7 @@ func TestDefaultLoad(t *testing.T) {
 
 	var val map[string]interface{}
 	require.NoError(t, p.Get(Root).Populate(&val))
-	assert.Equal(5, len(val))
+	assert.Equal(4, len(val))
 	assert.Equal("base", p.Get("source").AsString())
 	assert.Equal(80, p.Get("interpolated").AsInt())
 	assert.Equal("loaded", p.Get("development").AsString())
@@ -153,7 +153,7 @@ func TestDefaultLoadMultipleTimes(t *testing.T) {
 
 	var val map[string]interface{}
 	require.NoError(t, p.Get(Root).Populate(&val))
-	assert.Equal(3, len(val))
+	assert.Equal(2, len(val))
 	assert.Equal("base", p.Get("source").AsString())
 	assert.Equal(80, p.Get("interpolated").AsInt())
 	assert.Empty(p.Get("roles").Value())
