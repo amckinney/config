@@ -38,7 +38,6 @@ type Value struct {
 	value        interface{}
 	found        bool
 	defaultValue interface{}
-	timestamp    time.Time
 }
 
 // NewValue creates a configuration value from a provider and a set
@@ -48,22 +47,14 @@ func NewValue(
 	key string,
 	value interface{},
 	found bool,
-	timestamp *time.Time,
 ) Value {
-	cv := Value{
+	return Value{
 		provider:     provider,
 		key:          key,
 		value:        value,
 		defaultValue: nil,
 		found:        found,
 	}
-
-	if timestamp == nil {
-		cv.timestamp = time.Now()
-	} else {
-		cv.timestamp = *timestamp
-	}
-	return cv
 }
 
 // Source returns a configuration provider's name.
@@ -72,14 +63,6 @@ func (cv Value) Source() string {
 		return ""
 	}
 	return cv.provider.Name()
-}
-
-// LastUpdated returns when the configuration value was last updated.
-func (cv Value) LastUpdated() time.Time {
-	if !cv.HasValue() {
-		return time.Time{} // zero value if never updated?
-	}
-	return cv.timestamp
 }
 
 // WithDefault sets the default value that can be overridden

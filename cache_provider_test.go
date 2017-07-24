@@ -61,7 +61,7 @@ func TestCachedProvider_GetNewValues(t *testing.T) {
 			t.Fatal("cache was called more than once")
 		}
 		count++
-		return NewValue(m, key, "Simpsons", true, nil)
+		return NewValue(m, key, "Simpsons", true)
 	}
 
 	p := newCachedProvider(m)
@@ -87,7 +87,7 @@ func TestCachedProviderConcurrentUse(t *testing.T) {
 			t.Fatal("cache was called more than twice")
 		}
 
-		return NewValue(m, key, "Simpsons", true, nil)
+		return NewValue(m, key, "Simpsons", true)
 	}
 
 	p := newCachedProvider(m)

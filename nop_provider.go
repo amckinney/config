@@ -20,8 +20,6 @@
 
 package config
 
-import "time"
-
 // NopProvider is an implementation of config provider that does nothing.
 type NopProvider struct{}
 
@@ -34,5 +32,5 @@ func (p NopProvider) Name() string {
 
 // Get returns an invalid Value.
 func (p NopProvider) Get(key string) Value {
-	return NewValue(p, key, nil, true, &time.Time{})
+	return NewValue(p, key, nil, true)
 }
