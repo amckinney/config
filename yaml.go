@@ -122,7 +122,7 @@ func mergeMaps(dst interface{}, src interface{}) interface{} {
 // file names. All the objects are going to be merged and arrays/values
 // overridden in the order of the files.
 func NewYAMLProviderFromFiles(files ...string) Provider {
-	return NewCachedProvider(newYAMLProviderCore(filesToReaders(files...)...))
+	return newCachedProvider(newYAMLProviderCore(filesToReaders(files...)...))
 }
 
 // NewYAMLProviderWithExpand creates a configuration provider from a set of YAML
@@ -134,7 +134,7 @@ func NewYAMLProviderWithExpand(mapping func(string) (string, bool), files ...str
 // NewYAMLProviderFromReader creates a configuration provider from a list of io.ReadClosers.
 // As above, all the objects are going to be merged and arrays/values overridden in the order of the files.
 func NewYAMLProviderFromReader(readers ...io.ReadCloser) Provider {
-	return NewCachedProvider(newYAMLProviderCore(readers...))
+	return newCachedProvider(newYAMLProviderCore(readers...))
 }
 
 // NewYAMLProviderFromReaderWithExpand creates a configuration provider from
@@ -145,7 +145,7 @@ func NewYAMLProviderFromReaderWithExpand(
 	readers ...io.ReadCloser) Provider {
 	p := newYAMLProviderCore(readers...)
 	p.root.applyOnAllNodes(replace(mapping))
-	return NewCachedProvider(p)
+	return newCachedProvider(p)
 }
 
 // NewYAMLProviderFromBytes creates a config provider from a byte-backed YAML
@@ -157,7 +157,7 @@ func NewYAMLProviderFromBytes(yamls ...[]byte) Provider {
 		closers[i] = ioutil.NopCloser(bytes.NewReader(yml))
 	}
 
-	return NewCachedProvider(newYAMLProviderCore(closers...))
+	return newCachedProvider(newYAMLProviderCore(closers...))
 }
 
 func filesToReaders(files ...string) []io.ReadCloser {

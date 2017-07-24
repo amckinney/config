@@ -32,14 +32,14 @@ import (
 func TestCacheProviderName(t *testing.T) {
 	t.Parallel()
 
-	c := NewCachedProvider(NewStaticProvider(nil))
+	c := newCachedProvider(NewStaticProvider(nil))
 	assert.Equal(t, `cached "static"`, c.Name())
 }
 
 func TestCachedProvider_ConstructorPanicsOnNil(t *testing.T) {
 	t.Parallel()
 
-	assert.Panics(t, func() { NewCachedProvider(nil) })
+	assert.Panics(t, func() { newCachedProvider(nil) })
 }
 
 type testCachedProvider struct {
@@ -64,7 +64,7 @@ func TestCachedProvider_GetNewValues(t *testing.T) {
 		return NewValue(m, key, "Simpsons", true, nil)
 	}
 
-	p := NewCachedProvider(m)
+	p := newCachedProvider(m)
 
 	v := p.Get("cartoon")
 
@@ -90,7 +90,7 @@ func TestCachedProviderConcurrentUse(t *testing.T) {
 		return NewValue(m, key, "Simpsons", true, nil)
 	}
 
-	p := NewCachedProvider(m)
+	p := newCachedProvider(m)
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 	get := func() {
