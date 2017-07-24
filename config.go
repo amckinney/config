@@ -56,7 +56,9 @@ func LoadDefaults() (Provider, error) {
 		os.LookupEnv)
 }
 
-// LoadTestProvider will read configuration base.yaml and test.yaml from a
+// LoadTestProvider returns a default set of test configuration files:
+//  ./config/base.yaml
+//  ./config/test.yaml
 func LoadTestProvider() (Provider, error) {
 	return LoadFromFiles(
 		[]string{"config"},
