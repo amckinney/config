@@ -124,13 +124,19 @@ func TestDefaultLoad(t *testing.T) {
 	p, err := LoadDefaults()
 	require.NoError(t, err)
 
-	var val map[string]interface{}
+	type cfg struct {
+		Source      string `yaml:"source"`
+		Intepolated int    `yaml:"interpolated"`
+		Development string `yaml:"development"`
+		Secret      string `yaml:"secret"`
+	}
+
+	var val cfg
 	require.NoError(t, p.Get(Root).Populate(&val))
-	assert.Equal(4, len(val))
-	assert.Equal("base", p.Get("source").AsString())
-	assert.Equal(80, p.Get("interpolated").AsInt())
-	assert.Equal("loaded", p.Get("development").AsString())
-	assert.Equal("${password:1111}", p.Get("secret").AsString())
+	assert.Equal("base", val.Source)
+	assert.Equal(80, val.Intepolated)
+	assert.Equal("loaded", val.Development)
+	assert.Equal("${password:1111}", val.Secret)
 	assert.Empty(p.Get("roles").Value())
 }
 
@@ -151,11 +157,15 @@ func TestDefaultLoadMultipleTimes(t *testing.T) {
 	p, err = LoadDefaults()
 	require.NoError(t, err)
 
-	var val map[string]interface{}
+	type cfg struct {
+		Source      string `yaml:"source"`
+		Intepolated int    `yaml:"interpolated"`
+	}
+
+	var val cfg
 	require.NoError(t, p.Get(Root).Populate(&val))
-	assert.Equal(2, len(val))
-	assert.Equal("base", p.Get("source").AsString())
-	assert.Equal(80, p.Get("interpolated").AsInt())
+	assert.Equal("base", val.Source)
+	assert.Equal(80, val.Intepolated)
 	assert.Empty(p.Get("roles").Value())
 }
 
@@ -179,8 +189,16 @@ func TestLoadTestProvider(t *testing.T) {
 
 	p, err := LoadTestProvider()
 	require.NoError(t, err)
-	assert.Equal("base", p.Get("source").AsString())
-	assert.Equal("test", p.Get("dir").AsString())
+
+	type cfg struct {
+		Source string `yaml:"source"`
+		Dir    string `yaml:"dir"`
+	}
+
+	var val cfg
+	require.NoError(t, p.Get(Root).Populate(&val))
+	assert.Equal("base", val.Source)
+	assert.Equal("test", val.Dir)
 }
 
 func TestErrorWhenNoFilesLoaded(t *testing.T) {
@@ -200,7 +218,7 @@ one:
   two: hello
 `)
 
-	cfg := NewYAMLProviderFromBytes(txt).Get(Root).AsString()
+	cfg := NewYAMLProviderFromBytes(txt).Get(Root).String()
 	assert.Equal(t, "map[one:map[two:hello]]", cfg)
 }
 
@@ -230,10 +248,10 @@ func TestScopedAccess(t *testing.T) {
 	v2 := p1.Get("idx").WithDefault("nope")
 
 	assert.True(t, v1.HasValue())
-	assert.Equal(t, 111, v1.AsInt())
+	assert.Equal(t, 111, v1.Value())
 	assert.True(t, v2.IsDefault())
 	assert.True(t, v2.HasValue())
-	assert.Equal(t, v2.AsString(), "nope")
+	assert.Equal(t, v2.Value(), "nope")
 }
 
 func TestSimpleConfigValues(t *testing.T) {
@@ -243,50 +261,23 @@ func TestSimpleConfigValues(t *testing.T) {
 		NewYAMLProviderFromBytes(yamlConfig3),
 	)
 
-	assert.Equal(t, 123, provider.Get("int").AsInt())
-	assert.Equal(t, "test string", provider.Get("string").AsString())
-	_, ok := provider.Get("nonexisting").TryAsString()
-	assert.False(t, ok)
-	assert.Equal(t, true, provider.Get("bool").AsBool())
-	assert.Equal(t, 1.123, provider.Get("float").AsFloat())
+	type cfg struct {
+		Int    int     `yaml:"int"`
+		String string  `yaml:"string"`
+		Bool   bool    `yaml:"bool"`
+		Float  float64 `yaml:"float"`
+	}
+
+	var val cfg
+	require.NoError(t, provider.Get(Root).Populate(&val))
+	assert.Equal(t, 123, val.Int)
+	assert.Equal(t, "test string", val.String)
+	assert.Equal(t, true, val.Bool)
+	assert.Equal(t, 1.123, val.Float)
 
 	nested := &nested{}
 	v := provider.Get("nonexisting")
 	assert.NoError(t, v.Populate(nested))
-}
-
-func TestGetAsIntegerValue(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		value interface{}
-	}{
-		{float32(2)},
-		{float64(2)},
-		{int(2)},
-		{int32(2)},
-		{int64(2)},
-	}
-	for _, tc := range testCases {
-		cv := NewValue(NewStaticProvider(nil), "key", tc.value, true)
-		assert.Equal(t, 2, cv.AsInt())
-	}
-}
-
-func TestGetAsFloatValue(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		value interface{}
-	}{
-		{float32(2)},
-		{float64(2)},
-		{int(2)},
-		{int32(2)},
-		{int64(2)},
-	}
-	for _, tc := range testCases {
-		cv := NewValue(NewStaticProvider(nil), "key", tc.value, true)
-		assert.Equal(t, float64(2), cv.AsFloat())
-	}
 }
 
 func TestNestedStructs(t *testing.T) {
@@ -343,19 +334,6 @@ func TestDefault(t *testing.T) {
 	assert.True(t, v.HasValue())
 	assert.NoError(t, v.Populate(target))
 	assert.Equal(t, "default_name", target.Name)
-}
-
-func TestInvalidConfigFailures(t *testing.T) {
-	t.Parallel()
-	valueType := []byte(`
-id: xyz
-boolean: hooli
-`)
-	provider := NewYAMLProviderFromBytes(valueType)
-	assert.Panics(t, func() { NewYAMLProviderFromBytes([]byte("bytes: \n\x010")) }, "Can't parse invalid YAML")
-	assert.Panics(t, func() { provider.Get("id").AsInt() }, "Can't parse as int")
-	assert.Panics(t, func() { provider.Get("boolean").AsBool() }, "Can't parse invalid boolean")
-	assert.Panics(t, func() { provider.Get("id").AsFloat() }, "Can't parse as float")
 }
 
 func TestNopProvider_Get(t *testing.T) {

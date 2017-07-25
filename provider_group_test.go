@@ -31,34 +31,33 @@ func TestProviderGroup(t *testing.T) {
 	t.Parallel()
 	pg := NewProviderGroup("test-group", NewYAMLProviderFromBytes([]byte(`id: test`)))
 	assert.Equal(t, "test-group", pg.Name())
-	assert.Equal(t, "test", pg.Get("id").AsString())
+	assert.Equal(t, "test", pg.Get("id").Value())
 }
 
 func TestProviderGroupScope(t *testing.T) {
 	t.Parallel()
 	data := map[string]interface{}{"hello": map[string]int{"world": 42}}
 	pg := NewProviderGroup("test-group", NewStaticProvider(data))
-	assert.Equal(t, 42, pg.Get("hello").Get("world").AsInt())
+	assert.Equal(t, 42, pg.Get("hello").Get("world").Value())
 }
-
 
 func TestScope_WithGetFromValue(t *testing.T) {
 	t.Parallel()
 	mock := NewYAMLProviderFromBytes([]byte(`uber.fx: go-lang`))
 	scope := NewScopedProvider("", mock)
-	require.Equal(t, "go-lang", scope.Get("uber.fx").AsString())
+	require.Equal(t, "go-lang", scope.Get("uber.fx").Value())
 	require.False(t, scope.Get("uber").HasValue())
 
 	base := scope.Get("uber")
-	require.Equal(t, "go-lang", base.Get("fx").AsString())
+	require.Equal(t, "go-lang", base.Get("fx").Value())
 	require.False(t, base.Get("").HasValue())
 
 	uber := base.Get(Root)
-	require.Equal(t, "go-lang", uber.Get("fx").AsString())
+	require.Equal(t, "go-lang", uber.Get("fx").Value())
 	require.False(t, uber.Get("").HasValue())
 
 	fx := uber.Get("fx")
-	require.Equal(t, "go-lang", fx.Get("").AsString())
+	require.Equal(t, "go-lang", fx.Get("").Value())
 	require.False(t, fx.Get("fx").HasValue())
 }
 
@@ -72,7 +71,9 @@ logging:
   enabled: true
 `)
 	pg := NewProviderGroup("group", NewYAMLProviderFromBytes(snd), NewYAMLProviderFromBytes(fst))
-	assert.True(t, pg.Get("logging").Get("enabled").AsBool())
+	var enabled bool
+	pg.Get("logging.enabled").Populate(&enabled)
+	assert.True(t, enabled)
 }
 
 func TestProviderGroup_GetChecksAllProviders(t *testing.T) {

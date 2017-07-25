@@ -52,9 +52,7 @@ func TestYAMLSimple(t *testing.T) {
 
 	c := provider.Get("modules.rpc.bind")
 	assert.True(t, c.HasValue())
-	assert.NotNil(t, c.Value())
-
-	assert.Equal(t, ":28941", c.AsString())
+	assert.Equal(t, ":28941", c.Value())
 }
 
 func TestYAMLEnvInterpolation(t *testing.T) {
@@ -76,12 +74,24 @@ module:
 
 	p := NewYAMLProviderFromReaderWithExpand(f, ioutil.NopCloser(cfg))
 
-	num, ok := p.Get("module.fake.number").TryAsFloat()
-	require.True(t, ok)
-	require.Equal(t, float64(321), num)
+	type fakeCfg struct {
+		Number float64 `yaml:"number"`
+	}
 
-	owner := p.Get("owner").AsString()
-	require.Equal(t, "hello@there.yasss", owner)
+	type moduleCfg struct {
+		Fake fakeCfg
+	}
+
+	type config struct {
+		Owner  string
+		Module moduleCfg
+	}
+
+	var val config
+	require.NoError(t, p.Get(Root).Populate(&val))
+
+	require.Equal(t, float64(321), val.Module.Fake.Number)
+	require.Equal(t, "hello@there.yasss", val.Owner)
 }
 
 func TestYAMLEnvInterpolationMissing(t *testing.T) {
@@ -119,7 +129,7 @@ func TestYAMLEnvInterpolationWithColon(t *testing.T) {
 	}
 
 	p := NewYAMLProviderFromReaderWithExpand(f, ioutil.NopCloser(cfg))
-	require.Equal(t, "this:is:my:value", p.Get("fullValue").AsString())
+	require.Equal(t, "this:is:my:value", p.Get("fullValue").Value())
 }
 
 func TestYAMLEnvInterpolationEmptyString(t *testing.T) {
@@ -131,8 +141,8 @@ fullTel: 1-800-LOLZ${TELEPHONE_EXTENSION:""}`)
 
 	f := func(string) (string, bool) { return "", false }
 	p := NewYAMLProviderFromReaderWithExpand(f, ioutil.NopCloser(cfg))
-	require.Equal(t, "my shiny app", p.Get("name").AsString())
-	require.Equal(t, "1-800-LOLZ", p.Get("fullTel").AsString())
+	require.Equal(t, "my shiny app", p.Get("name").Value())
+	require.Equal(t, "1-800-LOLZ", p.Get("fullTel").Value())
 }
 
 type configStruct struct {
@@ -173,29 +183,9 @@ func TestExtends(t *testing.T) {
 	t.Parallel()
 	provider := NewYAMLProviderFromFiles("./testdata/base.yaml", "./testdata/dev.yaml", "./testdata/secrets.yaml")
 
-	baseValue := provider.Get("value").AsString()
-	assert.Equal(t, "base_only", baseValue)
-
-	devValue := provider.Get("value_override").AsString()
-	assert.Equal(t, "dev_setting", devValue)
-
-	secretValue := provider.Get("secret").AsString()
-	assert.Equal(t, "my_${secret}", secretValue)
-}
-
-func TestAppRoot(t *testing.T) {
-	t.Parallel()
-
-	provider := NewYAMLProviderFromFiles("./testdata/base.yaml", "./testdata/dev.yaml", "./testdata/secrets.yaml")
-
-	baseValue := provider.Get("value").AsString()
-	assert.Equal(t, "base_only", baseValue)
-
-	devValue := provider.Get("value_override").AsString()
-	assert.Equal(t, "dev_setting", devValue)
-
-	secretValue := provider.Get("secret").AsString()
-	assert.Equal(t, "my_${secret}", secretValue)
+	assert.Equal(t, "base_only", provider.Get("value").Value())
+	assert.Equal(t, "dev_setting", provider.Get("value_override").Value())
+	assert.Equal(t, "my_${secret}", provider.Get("secret").Value())
 }
 
 func TestNewYAMLProviderFromReader(t *testing.T) {
@@ -958,26 +948,15 @@ a.b:
 func TestFlatSingleDots(t *testing.T) {
 	t.Parallel()
 
-	type b struct {
-		S string
-		I int
-	}
-
-	type a struct {
-		B b
-	}
-
 	bytes := []byte(`
 .: .
 ..: ..
-...: 3
 .................................................: 50
 `)
 	provider := NewYAMLProviderFromBytes(bytes)
-	require.Equal(t, ".", provider.Get(".").AsString())
-	require.Equal(t, "..", provider.Get("..").AsString())
-	require.Equal(t, "3", provider.Get("...").AsString())
-	require.Equal(t, 50, provider.Get(".................................................").AsInt())
+	require.Equal(t, ".", provider.Get(".").Value())
+	require.Equal(t, "..", provider.Get("..").Value())
+	require.Equal(t, 50, provider.Get(".................................................").Value().(int))
 }
 
 func TestDotsFromMultipleSources(t *testing.T) {
@@ -1054,9 +1033,14 @@ func TestYAMLEnvInterpolationValueConversion(t *testing.T) {
 	}
 
 	p := NewYAMLProviderFromReaderWithExpand(f, ioutil.NopCloser(cfg))
-	v, ok := p.Get("number").TryAsInt()
-	require.True(t, ok)
-	assert.Equal(t, 3, v)
+
+	type config struct {
+		Number int
+	}
+
+	var val config
+	require.NoError(t, p.Get(Root).Populate(&val))
+	assert.Equal(t, 3, val.Number)
 }
 
 type cartoon struct {

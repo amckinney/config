@@ -54,7 +54,7 @@ func TestStaticProvider_WithData(t *testing.T) {
 	val := p.Get("hello")
 	assert.True(t, val.HasValue())
 	assert.False(t, val.IsDefault())
-	assert.Equal(t, "world", val.AsString())
+	assert.Equal(t, "world", val.Value())
 }
 
 func TestStaticProvider_WithGet(t *testing.T) {
@@ -70,7 +70,7 @@ func TestStaticProvider_WithGet(t *testing.T) {
 	sub := p.Get("hello")
 	val = sub.Get("world")
 	assert.True(t, val.HasValue())
-	assert.Equal(t, 42, val.AsInt())
+	assert.Equal(t, 42, val.Value())
 }
 
 func TestStaticProviderFmtPrintOnValueNoPanic(t *testing.T) {
@@ -167,14 +167,12 @@ func TestPopulateForBuiltins(t *testing.T) {
 		var i int
 		require.NoError(t, p.Get(Root).Populate(&i))
 		assert.Equal(t, 1, i)
-		assert.Equal(t, 1, p.Get(Root).AsInt())
 	})
 	t.Run("float", func(t *testing.T) {
 		p := NewStaticProvider(1.23)
 		var f float64
 		require.NoError(t, p.Get(Root).Populate(&f))
 		assert.Equal(t, 1.23, f)
-		assert.Equal(t, 1.23, p.Get(Root).AsFloat())
 	})
 	t.Run("string", func(t *testing.T) {
 		p := NewStaticProvider("pie")
@@ -188,7 +186,6 @@ func TestPopulateForBuiltins(t *testing.T) {
 		var b bool
 		require.NoError(t, p.Get(Root).Populate(&b))
 		assert.True(t, b)
-		assert.True(t, p.Get(Root).AsBool())
 	})
 }
 
@@ -237,12 +234,12 @@ func TestStaticProviderWithExpand(t *testing.T) {
 		return "", false
 	})
 
-	assert.Equal(t, "one", p.Get("slice.0").AsString())
-	assert.Equal(t, "3", p.Get("slice.1").AsString())
+	assert.Equal(t, "one", p.Get("slice.0").Value())
+	assert.Equal(t, "3", p.Get("slice.1").Value())
 	assert.Equal(t, "null", p.Get("value").Value())
 
-	assert.Equal(t, "rum please!", p.Get("map.drink?").AsString())
-	assert.Equal(t, "with cream", p.Get("map.tea?").AsString())
+	assert.Equal(t, "rum please!", p.Get("map.drink?").Value())
+	assert.Equal(t, "with cream", p.Get("map.tea?").Value())
 }
 
 func TestPopulateForMapOfDifferentKeyTypes(t *testing.T) {
@@ -278,7 +275,9 @@ func TestInterpolatedBool(t *testing.T) {
 	}
 
 	p := NewYAMLProviderFromReaderWithExpand(f, ioutil.NopCloser(strings.NewReader("val: ${interpolate:false}")))
-	assert.True(t, p.Get("val").AsBool())
+	var interpolate bool
+	p.Get("val").Populate(&interpolate)
+	assert.True(t, interpolate)
 }
 
 func TestConfigDefaults(t *testing.T) {
@@ -317,30 +316,4 @@ func TestConfigDefaultsAreOverriddenByHigherPriorityProviders(t *testing.T) {
 		"Failed to write a novel.",
 	)
 	assert.Equal(t, book{Title: "The Financier", Author: "Dreiser", Year: 1925}, novel)
-}
-
-func TestMissingValuesForTryMethods(t *testing.T) {
-	t.Parallel()
-
-	assert := assert.New(t)
-	v := NewStaticProvider(nil).Get("missing")
-	t.Run("int", func(t *testing.T) {
-		_, ok := v.TryAsInt()
-		assert.False(ok)
-	})
-
-	t.Run("float", func(t *testing.T) {
-		_, ok := v.TryAsFloat()
-		assert.False(ok)
-	})
-
-	t.Run("string", func(t *testing.T) {
-		_, ok := v.TryAsString()
-		assert.False(ok)
-	})
-
-	t.Run("bool", func(t *testing.T) {
-		_, ok := v.TryAsBool()
-		assert.False(ok)
-	})
 }
